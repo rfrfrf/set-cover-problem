@@ -15,7 +15,7 @@ namespace MinMatrixCover
 
         protected override float GetValue(int i, int j)
         {
-            return GetItem(i, j) / GetColumnValue(i);
+            return GetItem(i, j) * GetColumnValue(i);
         }
 
         //protected override float ComputeRowValue(int j)
@@ -41,7 +41,28 @@ namespace MinMatrixCover
             //int row = GetRowWithMaxValue(i);
             int row = GetBestRow(out i);
             RemoveAllByRow(row);
+
+            GenColumnValues();
+            GenRowValues();
+
+            RemoveEmptyRows();
+
+
             return row;
+        }
+
+        protected override float ComputeRowValue(int j)
+        {
+
+            return (base.ComputeRowValue(j) - rowsWeight[j] );// / _columnIndexes.Count(i0 => GetItem(i0, j) == 1);
+        }
+
+        protected override float ComputeColumnValue(int i)
+        {
+            var workers = _rowIndexes.Where(j => GetItem(i, j) == 1);
+            var cost = workers.Aggregate(0, (s, j) => s + rowsWeight[j]  /_columnIndexes.Count(i0 => GetItem(i0, j) == 1));
+            cost = cost / workers.Count();
+            return cost;
         }
 
 

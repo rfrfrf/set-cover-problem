@@ -26,6 +26,8 @@ namespace MinMatrixCover
         protected int _width;
         protected int _height;
 
+        protected List<int> rowsWeight = new List<int>();
+
         public Matrix(int width, int height)
         {
             Init(width, height);
@@ -41,7 +43,8 @@ namespace MinMatrixCover
             {
                 _data.Add(new int[_height]);
             }
-
+            rowsWeight = Enumerable.Range(0,height).Select(x=>1).ToList();
+            
             ClearIndexes();
         }
 
@@ -142,7 +145,7 @@ namespace MinMatrixCover
         protected float GetRowValue(int j)
         {
             //return _columnIndexes.ToList().Aggregate(0, (s2, i) => s2 + GetItem(i, j));
-            return _rowValues[j];             
+            return _rowValues[j]/rowsWeight[j];             
         }
         //number 1 in row
         protected virtual float ComputeRowValue(int j)
@@ -155,13 +158,13 @@ namespace MinMatrixCover
         }
         protected virtual void GenColumnValues()
         { 
-            _columnValues = new float[_columnIndexes.Count];
+            _columnValues = new float[_width];
 
             _columnIndexes.AsParallel().ForAll(i => _columnValues[i] = ComputeColumnValue(i));
         }
         protected virtual void GenRowValues()
         {
-            _rowValues = new float[_rowIndexes.Count];
+            _rowValues = new float[_height];
 
             _rowIndexes.AsParallel().ForAll(j => _rowValues[j] = ComputeRowValue(j));
         }
@@ -229,7 +232,7 @@ namespace MinMatrixCover
             //int row = GetRowWithMaxValue(i);
             int row = GetBestRow(out i);
             RemoveAllByRow(row);
-            //RemoveAllByColumn(i);
+           // RemoveAllByColumn(i);//
             RemoveEmptyRows();
             return row;
         }
@@ -243,7 +246,9 @@ namespace MinMatrixCover
         {
             _rowIndexes.ToList().ForEach(j =>
             {
-                if (GetRowValue(j) == 0)
+                //if (GetRowValue(j) == 0)
+
+                if (!_columnIndexes.Any(i => GetItem(i, j) == 1))
                 {
                     RemoveRow(j);
                 }
@@ -265,10 +270,17 @@ namespace MinMatrixCover
             {
                 int column;
                 int row = GetSyndromRow(out column);
+                //RemoveEmptyRows();
+
                 KeyValuePair<int, int> syndromElement = new KeyValuePair<int, int>(row, column);
                 result.Add(syndromElement);
             }
             return result;
+        }
+
+        public float GetOFV(List<KeyValuePair<int, int>> solution)
+        {
+            return solution.Sum(x => rowsWeight[x.Key]);
         }
 
 
@@ -324,7 +336,7 @@ namespace MinMatrixCover
         {
             List<int> result = new List<int>(_height);
 
-            int count = Math.Min(_height / 2 +1,r);
+            int count = Math.Min(Math.Min(_height / 2 +1,r), syndromElements.Count);
             for (int j = 0; j < _height; j++)
             {
                 int sum = 0;
@@ -350,6 +362,8 @@ namespace MinMatrixCover
             List<KeyValuePair<int, int>> result = null;
             List<KeyValuePair<int, int>> solution = new List<KeyValuePair<int, int>>();
 
+            int widthBase = _width;
+
             List<int> resolvent;
             for (int i = 0; i < count; i++)
            
@@ -357,20 +371,35 @@ namespace MinMatrixCover
             {
                 ClearIndexes();
                 solution = Solve();
+                //Console.WriteLine("solution {0}: {1} ", i,
+                //    String.Concat(
+                //        solution.Select(x => string.Format("{0}:{1}, ", x.Key, x.Value))));
 
-                if (result == null || result.Count > solution.Count)
+                if (result == null || GetOFV(result) > GetOFV(solution))
+                //if (result == null || result.Count > solution.Count)
+
                 {
                     result = solution;
                 }
                 resolvent = GetResolvent(solution, result.Count);
-                _data.Add(resolvent.ToArray());
-                _width++;
+
+                var freeIndexes= Enumerable.Range(widthBase, _width - widthBase).Where(x => !solution.Any(y => y.Value == x)).ToList();
+                if (freeIndexes.Count > 0 && (_width - widthBase) > result.Count)
+                {
+                    _data[freeIndexes.OrderByDescending(x=>GetColumnValue(x)).First()] = resolvent.ToArray();
+                }
+                else
+                {
+                    _data.Add(resolvent.ToArray());
+                    _width++;
+                }
                // Console.WriteLine("S:{0} R:{1}", solution.Count, resolvent.Sum());
 
                 if (!resolvent.Contains(1))
                 {
                     break;
                 }
+                
             } //while (resolvent.Contains(1));
 
             var check = result.Select(j => _data.Select(l => l[j.Key]).ToList()).ToList();
@@ -379,28 +408,30 @@ namespace MinMatrixCover
 
         public void ReadFromFile(string path)
         {
-            List<int> columnsWeight = new List<int>();
             string[] lines=File.ReadAllLines(path);
             var tmp = lines.SelectMany(l => l.Split(' ')).Where(x=>!string.IsNullOrWhiteSpace(x)).ToList();
             int[] elements = tmp.Select(x=>int.Parse(x)).ToArray();
             int pos = 0;
-            int h = (elements[pos++]);
             int w = (elements[pos++]);
+            int h = (elements[pos++]);
 
             Init(w, h);
+            rowsWeight = new List<int>();
 
-            while (columnsWeight.Count < w)
+            while (rowsWeight.Count < h)
             {
-                    columnsWeight.Add(elements[pos++]);
+                rowsWeight.Add(elements[pos++]);
+                //rowsWeight.Add(1); 
+                //pos++;
 
             }
 
-            for (int j = 0; j < h; j++)
+            for (int i = 0; i < w; i++)
             {
                 int n = elements[pos++];
                 for (int k = 0; k < n; k++)
                 {
-                    int i = elements[pos++]-1;
+                    int j = elements[pos++]-1;
                     SetItem(i, j, 1);
                 }
             }
