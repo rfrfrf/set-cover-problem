@@ -54,13 +54,13 @@ namespace MinMatrixCover
         protected override float ComputeRowValue(int j)
         {
 
-            return (base.ComputeRowValue(j) - rowsWeight[j] );// / _columnIndexes.Count(i0 => GetItem(i0, j) == 1);
+            return (base.ComputeRowValue(j) / rowsWeight[j] );// / _columnIndexes.Count(i0 => GetItem(i0, j) == 1);
         }
 
         protected override float ComputeColumnValue(int i)
         {
             var workers = _rowIndexes.Where(j => GetItem(i, j) == 1);
-            var cost = workers.Aggregate(0, (s, j) => s + rowsWeight[j]  /_columnIndexes.Count(i0 => GetItem(i0, j) == 1));
+            float cost = 1.0f;// workers.Aggregate(0, (s, j) => s + rowsWeight[j] / _columnIndexes.Count(i0 => GetItem(i0, j) == 1));
             cost = cost / workers.Count();
             return cost;
         }
