@@ -10,7 +10,7 @@ namespace MinMatrixCover
     {
         static void Main(string[] args)
         {
-            PerfTest2();
+            PerfTest();
             Console.ReadKey();
         }
 
@@ -80,18 +80,24 @@ namespace MinMatrixCover
             int state = 0;
             int[] counter = new int[3];
             for (int i = 0; i < n; i++)
-            {
-                m.GenerateMatrix(density, i);
+            //{
+            //    m.GenerateMatrix(density, i);
+            //    Console.WriteLine("{0} iteration",i);
+            //    m.Solve2(1000, out state);
+            //    counter[state]++;
+            //}
+                m.GenerateMatrix(density, 29);
+           Console.WriteLine( m.ToString());
+                Console.WriteLine("{0} iteration", 29);
                 m.Solve2(1000, out state);
                 counter[state]++;
-            }
             Console.WriteLine("Density={0}%, Convergense {1}%, Resolvent duplicate {2}%, j={3}", density*100, counter[2] * 100.0 / n, counter[1] * 100.0 / n, m.Width*density);
         }
         static void PerfTest()
         {
             float n;
-            int w = 500;
-            int h = 25;
+            int w = 1000;
+            int h = 200;
             float density = 0.20f;
             string path = "scp41.txt";
             for (int i = 0; i < 1; i++)
@@ -172,14 +178,16 @@ namespace MinMatrixCover
         static void PerfTest2()
         {
             float n;
-            int w = 100;
-            int h = 40;
-            for (float i = 0.01f; i < 0.2f; i += 0.01f)
-            {
+            int w = 7;
+            int h = 6;
+            //for (float i = 0.4f; i < 0.41f; i += 0.1f)
+            //{
               
-                Matrix m = new Matrix(w, h);
-                GetStatistics(m, 100, i);
-            }
+            //    Matrix m = new Matrix(w, h);
+            //    GetStatistics(m, 100, i);
+            //}
+            Matrix m = new Matrix(w, h);
+            GetStatistics(m, 100, 0.4f);
 
         }
     }
