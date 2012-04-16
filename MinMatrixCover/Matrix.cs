@@ -235,7 +235,7 @@ namespace MinMatrixCover
             //int row = GetRowWithMaxValue(i);
             int row = GetBestRow(out i);
             RemoveAllByRow(row);
-            // RemoveAllByColumn(i);//
+            //RemoveAllByColumn(i);//
             RemoveEmptyRows();
             return row;
         }
@@ -387,11 +387,19 @@ namespace MinMatrixCover
                 resolvent = GetResolvent(solution, result.Count);
                 if (resolventsList.Any(x => x.SequenceEqual(resolvent)))
                 {
-                    //Console.WriteLine("Resolvent exists");
-                    state = 1;
+                    Console.WriteLine("Resolvent exists");
+                   // state =+ 1;
                     break;
+                    //if (state > 1)
+                    //{
+                    //    Console.WriteLine("state>1");
+                    //}
                 }
-                resolventsList.Add(resolvent);
+                else
+                {
+                    resolventsList.Add(resolvent);
+                }
+                
                 var freeIndexes = Enumerable.Range(widthBase, _width - widthBase).Where(x => !solution.Any(y => y.Value == x)).ToList();
                 if (freeIndexes.Count > 0 && (_width - widthBase) > result.Count)
                 {
