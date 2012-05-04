@@ -49,6 +49,7 @@
     <Compile Include="MatrixPav2.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SequenceHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="scp41.txt">
