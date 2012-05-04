@@ -23,7 +23,8 @@ namespace MinMatrixCover
 
             int row = _rowIndexes
                 .Select(x => new { j = x, prior = 0.0 + 1 * _rnd.NextDouble() })
-                .AsParallel().OrderByDescending(x =>  
+                //.AsParallel()
+                .OrderByDescending(x =>  
                     (float)(
                         //GetRowValue(x.j)* kof + ( _feramonsValues[x.j]*( 1 - kof)) * x.prior)
                         GetRowValue(x.j)* (kof + (( 1 - kof)) * x.prior))
