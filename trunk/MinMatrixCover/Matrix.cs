@@ -90,6 +90,9 @@ namespace MinMatrixCover
 
         public void GenerateMatrix(float density, int seed = 15)
         {
+            //Init(_width, _height);
+            //ClearIndexes();
+
             int count = (int)Math.Round(_width * _height * density);
             Random random = new Random(seed);
             float probability1 = (_height * density - 1) / (_height - 1);//_width*_height*density/(_width*_height + _width - _height);//density - 1.0f / _height;
@@ -129,10 +132,11 @@ namespace MinMatrixCover
             //int row = _rowIndexes.First(j => (GetItem(i, j) == 1));
             var tmpDebug = _rowIndexes
                 .Where(j => (GetItem(i, j) == 1)).ToList();
+
             int row = _rowIndexes
                 //.AsParallel()
                 .Where(j => (GetItem(i, j) == 1))
-                .OrderByDescending(j => GetRowValue(j))
+                .OrderByMy(j => -GetRowValue(j), j=>j)
                 .First();
 
             return row;
@@ -229,7 +233,7 @@ namespace MinMatrixCover
             {
                 _columnIndexes = _columnIndexes
                     //.AsParallel()
-                    .OrderBy(i => GetColumnValue(i))
+                    .OrderByMy(i => GetColumnValue(i), i=>i)
                     .ToList();
             }
         }
@@ -297,10 +301,12 @@ namespace MinMatrixCover
             GenRowValues();
 
             RemoveEmptyRows();
+
             _columnIndexes = _columnIndexes
                 //.AsParallel()
-                .OrderBy(i => GetColumnValue(i))
+                .OrderByMy(i => GetColumnValue(i), i=>i)
                 .ToList();
+
 
             while (!Empty())
             {
@@ -463,6 +469,7 @@ namespace MinMatrixCover
             
             var check = result.Select(j => _data.Select(l => l[j.Key]).ToList()).ToList();
             _width = _widthBase;
+            _data.RemoveRange(_width, _data.Count - _width);
            //Init(widthBase, _height);
             return result;
         }
@@ -481,9 +488,9 @@ namespace MinMatrixCover
 
             while (rowsWeight.Count < h)
             {
-                rowsWeight.Add(elements[pos++]);
-                //rowsWeight.Add(1); 
-                //pos++;
+                //rowsWeight.Add(elements[pos++]);
+                rowsWeight.Add(1); 
+                pos++;
 
             }
 
@@ -500,6 +507,7 @@ namespace MinMatrixCover
 
 
         }
+
 
     }
 }
