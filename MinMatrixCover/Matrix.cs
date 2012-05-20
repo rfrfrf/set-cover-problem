@@ -146,6 +146,8 @@ namespace MinMatrixCover
         {
             column = GetColumnWithMinValue();
             int row = GetRowWithMaxValue(column);
+            Console.Write("{0}/", GetColumnValue(column));
+
             return row;
         }
 
@@ -307,7 +309,6 @@ namespace MinMatrixCover
                 .OrderByMy(i => GetColumnValue(i), i=>i)
                 .ToList();
 
-
             while (!Empty())
             {
                 int column;
@@ -317,6 +318,8 @@ namespace MinMatrixCover
                 KeyValuePair<int, int> syndromElement = new KeyValuePair<int, int>(row, column);
                 result.Add(syndromElement);
             }
+            Console.WriteLine("C:{0}", GetOFV(result));
+
             return result;
         }
 
@@ -434,7 +437,7 @@ namespace MinMatrixCover
                     Console.WriteLine("Resolvent exists");
                     state = 1;
                    // state =+ 1;
-                    break;
+                    //break;
                     //if (state > 1)
                     //{
                     //    Console.WriteLine("state>1");
@@ -473,6 +476,7 @@ namespace MinMatrixCover
            //Init(widthBase, _height);
             return result;
         }
+
 
         public void ReadFromFile(string path)
         {
