@@ -22,7 +22,7 @@ namespace MinMatrixCover
         protected float[] _columnValues;
         protected float[] _rowValues;
 
-        private List<KeyValuePair<int, int>> prevSolution=null;
+        private List<KeyValuePair<int, int>> prevSolution = null;
 
 
         protected int _width;
@@ -31,6 +31,8 @@ namespace MinMatrixCover
 
         public int Width { get { return _width; } }
         public int Height { get { return _height; } }
+
+        public List<KeyValuePair<int, float>> ResultDynamic { get; set; }
 
         protected List<int> rowsWeight = new List<int>();
 
@@ -136,7 +138,7 @@ namespace MinMatrixCover
             int row = _rowIndexes
                 //.AsParallel()
                 .Where(j => (GetItem(i, j) == 1))
-                .OrderByMy(j => -GetRowValue(j), j=>j)
+                .OrderByMy(j => -GetRowValue(j), j => j)
                 .First();
 
             return row;
@@ -146,7 +148,7 @@ namespace MinMatrixCover
         {
             column = GetColumnWithMinValue();
             int row = GetRowWithMaxValue(column);
-            Console.Write("{0}/", GetColumnValue(column));
+            //Console.Write("{0}/", GetColumnValue(column), column);
 
             return row;
         }
@@ -235,7 +237,7 @@ namespace MinMatrixCover
             {
                 _columnIndexes = _columnIndexes
                     //.AsParallel()
-                    .OrderByMy(i => GetColumnValue(i), i=>i)
+                    .OrderByMy(i => GetColumnValue(i), i => i)
                     .ToList();
             }
         }
@@ -263,14 +265,18 @@ namespace MinMatrixCover
             //i = GetColumnWithMinValue();
             //int row = GetRowWithMaxValue(i);
             int row = GetBestRow(out i);
-            if (prevSolution != null && prevSolution.Count>0 && i == prevSolution.First().Value)
+            //prevSolution = null; //temporary to return to old algorithm
+            //if (prevSolution != null && prevSolution.Count>0 && i == prevSolution.First().Value)
+            if (prevSolution != null && prevSolution.Count > 0 && GetColumnValue(i) >= GetColumnValue(prevSolution.First().Value))
             {
                 row = prevSolution.First().Key;
+                i = prevSolution.First().Value;
                 prevSolution.RemoveAt(0);
+
             }
             else
             {
-                prevSolution=null;
+                prevSolution = null;
             }
             RemoveAllByRow(row);
             RemoveAllByColumn(i);//
@@ -306,7 +312,7 @@ namespace MinMatrixCover
 
             _columnIndexes = _columnIndexes
                 //.AsParallel()
-                .OrderByMy(i => GetColumnValue(i), i=>i)
+                .OrderByMy(i => GetColumnValue(i), i => i)
                 .ToList();
 
             while (!Empty())
@@ -318,7 +324,7 @@ namespace MinMatrixCover
                 KeyValuePair<int, int> syndromElement = new KeyValuePair<int, int>(row, column);
                 result.Add(syndromElement);
             }
-            Console.WriteLine("C:{0}", GetOFV(result));
+            //Console.WriteLine("C:{0}", GetOFV(result));
 
             return result;
         }
@@ -402,17 +408,19 @@ namespace MinMatrixCover
             return result;
         }
 
-        public virtual List<KeyValuePair<int, int>> Solve2(int count, out int state)
+        public virtual List<KeyValuePair<int, int>> Solve2(int count, out int state, out int iterationCount)
         {
             List<KeyValuePair<int, int>> result = null;
             List<KeyValuePair<int, int>> solution = new List<KeyValuePair<int, int>>();
+            ResultDynamic = new List<KeyValuePair<int, float>>();
             state = 0;
             int widthBase = _width;
             _widthBase = _width;
 
             List<int> resolvent;
             List<List<int>> resolventsList = new List<List<int>>();
-            for (int i = 0; i < count; i++)
+            int i;
+            for (i = 0; i < count; i++)
 
             //  do
             {
@@ -430,13 +438,15 @@ namespace MinMatrixCover
                 //if (result == null || result.Count > solution.Count)
                 {
                     result = solution;
+                    ResultDynamic.Add(new KeyValuePair<int, float>(i, GetOFV(solution)));
+                    if (solution.Count <= 15) { break; }
                 }
                 resolvent = GetResolvent(solution, result.Count);
                 if (resolventsList.Any(x => x.SequenceEqual(resolvent)))
                 {
-                    Console.WriteLine("Resolvent exists");
+                    //Console.WriteLine("Resolvent exists");
                     state = 1;
-                   // state =+ 1;
+                    // state =+ 1;
                     //break;
                     //if (state > 1)
                     //{
@@ -447,33 +457,43 @@ namespace MinMatrixCover
                 {
                     resolventsList.Add(resolvent);
                 }
-                
+
+                int index;
                 var freeIndexes = Enumerable.Range(widthBase, _width - widthBase).Where(x => !solution.Any(y => y.Value == x)).ToList();
                 if (freeIndexes.Count > 0 && (_width - widthBase) > result.Count)
                 {
-                    var index = freeIndexes.OrderByDescending(x => GetColumnValue(x)).First();
+                    index = freeIndexes.OrderByDescending(x => GetColumnValue(x)).First();
                     _data[index] = resolvent.ToArray();
                 }
                 else
                 {
                     _data.Add(resolvent.ToArray());
+                    index = _width;
                     _width++;
+
                 }
                 // Console.WriteLine("S:{0} R:{1}", solution.Count, resolvent.Sum());
-
+                //Console.WriteLine("Resolvent[{1}] {0}", String.Concat(
+                //        resolvent.Select(x => x)), index);
                 if (!resolvent.Contains(1))
                 {
                     Console.WriteLine("Don't contains 1");
                     state = 2;
+
                     break;
                 }
 
             } //while (resolvent.Contains(1));
-            
+            ResultDynamic.Add(new KeyValuePair<int, float>(i, GetOFV(result)));
+            iterationCount = i;
+
             var check = result.Select(j => _data.Select(l => l[j.Key]).ToList()).ToList();
             _width = _widthBase;
             _data.RemoveRange(_width, _data.Count - _width);
-           //Init(widthBase, _height);
+            //Init(widthBase, _height);
+            _data.RemoveRange(_width, _data.Count - _width);
+            //Console.WriteLine("Number of iterations {0}", i);
+            //state = i;//AAAAAAAAAAAAAAAAA!!!!!!!!!!!!!
             return result;
         }
 
@@ -492,9 +512,9 @@ namespace MinMatrixCover
 
             while (rowsWeight.Count < h)
             {
-                //rowsWeight.Add(elements[pos++]);
-                rowsWeight.Add(1); 
-                pos++;
+                rowsWeight.Add(elements[pos++]);
+                //rowsWeight.Add(1); 
+                // pos++;
 
             }
 
@@ -510,6 +530,101 @@ namespace MinMatrixCover
 
 
 
+        }
+
+
+        public void GenerateMatrixForTest(float density, int minCover, int seed = 15)
+        {
+            int count = (int)Math.Round(_width * _height * density);
+            Random random = new Random(seed);
+
+            //fill left top square
+            for (int i = 0; i < minCover; i++)
+            {
+                SetItem(i, i, 1);
+            }
+            count -= minCover;
+
+            //fill left bottom rectangle
+            float countPerMinCoverRow = minCover * density;
+
+            for (int j = minCover; j < _height; j++)
+            {
+                if (countPerMinCoverRow > 1)
+                {
+                    SetItem(random.Next(minCover), j, 1);
+                    count--;
+                }
+                else
+                {
+                    if (random.NextDouble() > countPerMinCoverRow)
+                    {
+                        SetItem(random.Next(minCover), j, 1);
+                        count--;
+                    }
+                }
+            }
+
+            //fill right top rectangle
+            for (int i = minCover; i < _width; i++)
+            {
+                SetItem(i, random.Next(minCover), 1);
+                count--;
+            }
+
+            //fill other part of matrix
+            float probabitilyPart = ((float)count) / ((_width - minCover) * (_height - minCover));
+            for (int i = minCover; i < _width; i++)
+            {
+                for (int j = minCover; j < _height; j++)
+                {
+                    if (random.NextDouble() < probabitilyPart)
+                    {
+                        SetItem(i, j, 1);
+                    }
+                }
+            }
+        }
+
+        //Задайся некоторым набором строк (в каждом примере он должен быть разным), например,
+        //3,6,7,12,22, 33,35. 
+        public void GenerateMatrixForTest2(float density, int minCover, int seed = 15)
+        {
+            int count = (int)Math.Round(_width * _height * density);
+            Random random = new Random(seed);
+
+            List<int> coverRows = new List<int>();
+            for (int i = 0; i < minCover; i++)
+            {
+                int rnd = random.Next(1, _width);
+                if (!coverRows.Contains(rnd))
+                {
+                    coverRows.Add(rnd);
+                }
+                else
+                {
+                    i--;
+                }
+            }
+
+            this.GenerateMatrix(density, seed);
+            for (int i = 0; i < _width; i++)
+            {
+                bool contains = false;
+                foreach (var row in coverRows)
+                {
+                    if (GetItem(i, row) == 1)
+                    {
+                        contains = true;
+                        break;
+                    }
+                }
+                if (!contains)
+                {
+                    SetItem(i,coverRows[random.Next(coverRows.Count)],1);
+                }
+            }
+           
         }
 
 
