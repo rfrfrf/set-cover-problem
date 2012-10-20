@@ -6,6 +6,17 @@ using System.IO;
 
 namespace MinMatrixCover
 {
+    [Flags]
+    public enum OutputType
+    {
+        None = 0,
+        ShowTmpSolution = 1,
+        ShowBetterSolution = 1<<1,
+        ShowResolvent = 1 << 2,
+        ShowMatrixIteration = 1 << 3,
+        ShowDetailedSolve = 1 << 4
+    }
+
     public class Matrix
     {
         //матрица хранится, как список столбцов
@@ -33,6 +44,8 @@ namespace MinMatrixCover
 
         public int Width { get { return _width; } }
         public int Height { get { return _height; } }
+
+        public OutputType Output;
 
         //список улучшений решения: ResultDynamic(i) - пара key-номер итерации, value - количество строк в решении
         //для вывода итераций, на которых решение улучшается
@@ -315,11 +328,19 @@ namespace MinMatrixCover
             //пока матрица не разрушена, продолжаем итерации
             while (!Empty())
             {
+                if (Output.HasFlag(OutputType.ShowDetailedSolve))
+                {
+                    Console.WriteLine(this);
+                }
                 int column;
                 int row = GetSyndromRow(out column);
-
+                if (Output.HasFlag(OutputType.ShowDetailedSolve))
+                {
+                    Console.WriteLine("Syndrom item: row: {0}, column: {1})",row, column);
+                }
                 KeyValuePair<int, int> syndromElement = new KeyValuePair<int, int>(row, column);
                 result.Add(syndromElement);
+                
             }
             //Console.WriteLine("C:{0}", GetOFV(result));
 
@@ -385,13 +406,29 @@ namespace MinMatrixCover
         {
             StringBuilder result = new StringBuilder();
 
-            result.Append("  0 1 2 3 4 5 6 7 8 9").AppendLine();
+            result.Append("   ");
+
+            
+            for (int i = 0; i < _width; i++)
+            {
+                if (!_columnIndexes.Contains(i))
+                    continue;
+                result.AppendFormat("|{0,3}", i);
+            }
+            result.AppendLine();
+
+            
             for (int j = 0; j < _height; j++)
             {
-                result.AppendFormat("{0} ", j);
+                if (!_rowIndexes.Contains(j))
+                    continue;
+
+                result.AppendFormat("{0,3}|", j);
                 for (int i = 0; i < _width; i++)
                 {
-                    result.AppendFormat("{0} ", GetItem(i, j));
+                    if (!_columnIndexes.Contains(i))
+                        continue;
+                    result.AppendFormat("{0,3} ", GetItem(i, j));
                 }
                 result.AppendLine();
             }
@@ -429,6 +466,14 @@ namespace MinMatrixCover
             return result;
         }
 
+        public List<KeyValuePair<int, int>> Solve2(int count = 10000)
+        { 
+            int state;
+            int iter;
+            return Solve2(count, out state, out iter);
+        }
+
+
         /// <summary>
         /// Усиленный метод групповый резолюций (с заменой резольвент)
         /// </summary>
@@ -458,18 +503,32 @@ namespace MinMatrixCover
                 prevSolution = new List<KeyValuePair<int, int>>();
                 prevSolution.AddRange(solution);
 
+                if (Output.HasFlag(OutputType.ShowMatrixIteration))
+                {
+                    Console.WriteLine("Iteration: {0}", i);
+                    Console.WriteLine(this);
+                }
+
                 //решение на текущей итерации
                 solution = Solve();
                 var ofv = GetOFV(solution);
-                //Console.WriteLine("sol{0}: OFV:{1}: {2} ", i, ofv,
-                //    String.Concat(
-                //        solution.Select(x => string.Format("{0}:{1}, ", x.Key, x.Value))));
-
+                if (Output.HasFlag(OutputType.ShowTmpSolution))
+                {
+                    Console.WriteLine("sol{0}: OFV:{1}: {2} ", i, ofv,
+                        String.Concat(
+                            solution.Select(x => string.Format("{0}:{1}, ", x.Key, x.Value))));
+                }
                 //запоминаем лучшее решение
                 if (result == null || GetOFV(result) > GetOFV(solution))
                 {
                     result = solution;
                     ResultDynamic.Add(new KeyValuePair<int, float>(i, GetOFV(solution)));
+                    if (Output.HasFlag(OutputType.ShowBetterSolution) && !Output.HasFlag(OutputType.ShowTmpSolution))
+                    {
+                        Console.WriteLine("sol{0}: OFV:{1}: {2} ", i, ofv,
+                            String.Concat(
+                                solution.Select(x => string.Format("{0}:{1}, ", x.Key, x.Value))));
+                    }
                     //if (solution.Count <= 15) { break; }
                 }
                 //генерируем резольвенту
@@ -504,8 +563,11 @@ namespace MinMatrixCover
 
                 }
                 // Console.WriteLine("S:{0} R:{1}", solution.Count, resolvent.Sum());
-                //Console.WriteLine("Resolvent[{1}] {0}", String.Concat(
-                //        resolvent.Select(x => x)), index);
+                if (Output.HasFlag(OutputType.ShowResolvent))
+                {
+                    Console.WriteLine("Resolvent[{1}] {0}", String.Concat(
+                            resolvent.Select(x => x)), index);
+                }
                 if (!resolvent.Contains(1))
                 {
                     //прерываем алгоритм, если получили нулевую резольвенту
@@ -626,7 +688,7 @@ namespace MinMatrixCover
         //минимальное покрытие. Генерируй матрицу случайно, но так чтобы в каждом столбце генерируемой матрицы
         //как минимум одна из строк  3,6,7,12,22, 33,35 содержала в нем  единицу. Кроме того, генерируй матрицы с низкой плотностью единиц,
         //т.е. такие, где алгоритм не сходится за очень большое число итераций.
-        
+
         /// <summary>
         /// Способ2: Генерация матрицы с заданным минимальным покрытием (покрытие может быть и меньше заданого)
         /// </summary>

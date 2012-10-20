@@ -11,8 +11,11 @@ namespace MinMatrixCover
     {
         static void Main(string[] args)
         {
-            
-            PerfTest4();
+            Matrix m = new Matrix(30, 40);
+            m.GenerateMatrix(0.1f);
+            m.Output = OutputType.ShowBetterSolution;
+            m.Solve2(100);
+            //PerfTest4();
             Console.ReadKey();
         }
 
