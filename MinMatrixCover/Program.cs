@@ -11,10 +11,15 @@ namespace MinMatrixCover
     {
         static void Main(string[] args)
         {
+            Matrix mFile = new Matrix();
+            mFile.ReadFromCsvFile("MatrixTest.csv");
+            Console.WriteLine(mFile);
             Matrix m = new Matrix(30, 40);
             m.GenerateMatrix(0.1f);
-            m.Output = OutputType.ShowBetterSolution;
-            m.Solve2(100);
+            m.Output =  OutputType.ShowBetterSolution;
+            var result = m.Solve2(10000);
+            Console.WriteLine("Check: {0}", m.Check(result));
+
             //PerfTest4();
             Console.ReadKey();
         }
@@ -52,7 +57,7 @@ namespace MinMatrixCover
             Stopwatch timer = new Stopwatch();
             timer.Start();
             int state = 0;
-            int iterCount=0;
+            int iterCount = 0;
             var solution = m.Solve2(10000, out state, out iterCount);
             timer.Stop();
             if (solution.Count < prevN)
@@ -88,7 +93,7 @@ namespace MinMatrixCover
             int[] counter = new int[3];
             int sum = 0;
             Stopwatch stopwatch = new Stopwatch();
-            
+
             for (int i = 0; i < n; i++)
             {
                 m.GenerateMatrix(density, i);
@@ -103,7 +108,7 @@ namespace MinMatrixCover
                 sum += iterationCount;
             }
 
-            Console.WriteLine("Density={0}%, Convergence {1}%, Resolvent duplicate {2}%, j={3}, iterationCount={4}, time = {5} ms", density * 100, counter[2] * 100.0 / n, counter[1] * 100.0 / n, m.Width * density, sum/n, stopwatch.ElapsedMilliseconds/n);
+            Console.WriteLine("Density={0}%, Convergence {1}%, Resolvent duplicate {2}%, j={3}, iterationCount={4}, time = {5} ms", density * 100, counter[2] * 100.0 / n, counter[1] * 100.0 / n, m.Width * density, sum / n, stopwatch.ElapsedMilliseconds / n);
             //Console.WriteLine("Density={0}%, Iteration {1}", density * 100, sum/n);
             //Console.WriteLine("{0}; {1};", density * 100, sum / n);
             return string.Format("{0}x{1};{2};{3};{4}", m.Width, m.Height, density * 100, sum / n, stopwatch.ElapsedMilliseconds / n);
@@ -198,11 +203,11 @@ namespace MinMatrixCover
             //int h = 15;
             TextWriter resultFile = new StreamWriter("resultFile.csv");
             resultFile.WriteLine("WxH; density; count; time(ms)");
-            float[] densities = new float[]{0.05f, 0.08f, 0.15f, 0.2f, 0.4f, 0.6f};
+            float[] densities = new float[] { 0.05f, 0.08f, 0.15f, 0.2f, 0.4f, 0.6f };
             string[] sizes = new string[] { "20x40", "20x80", "30x100", "40x100", "50x120", "60x150", "80x200" }; //"100x300"
 
-           // string[] sizes = new string[] {"20x40", "40x100", "100x300", "400x800"};
-            foreach(var size in sizes)
+            // string[] sizes = new string[] {"20x40", "40x100", "100x300", "400x800"};
+            foreach (var size in sizes)
             {
                 int w = int.Parse(size.Split('x')[0]);
                 int h = int.Parse(size.Split('x')[1]);
@@ -247,12 +252,13 @@ namespace MinMatrixCover
                     Matrix m = new Matrix(w, h);
                     //m.GenerateMatrixForTest(density, h/20);
                     m.GenerateMatrix(density);
-                    var t=m.Solve2(10000, out state, out iterCount);
+                    var t = m.Solve2(10000, out state, out iterCount);
                     TextWriter resultFile = new StreamWriter(string.Format("resultDynamicFile_{0}_{1}.csv", size, density));
-                    foreach(var res in m.ResultDynamic){
-                    resultFile.WriteLine(string.Format("{0}; {1}", res.Key, res.Value));
+                    foreach (var res in m.ResultDynamic)
+                    {
+                        resultFile.WriteLine(string.Format("{0}; {1}", res.Key, res.Value));
                     }
-                   // resultFile.WriteLine(GetStatistics(m, 1, density));
+                    // resultFile.WriteLine(GetStatistics(m, 1, density));
                     resultFile.Flush();
                     resultFile.Close();
 
@@ -291,7 +297,7 @@ namespace MinMatrixCover
                         Console.WriteLine("    Density: {0}", density);
                         Matrix m = new Matrix(w, h);
                         //Matrix m = new MatrixPav(w, h);
-                        
+
                         //m.GenerateMatrixForTest(density, h/20);
                         //m.GenerateMatrix(density);
                         m.GenerateMatrixForTest2(density, 15, i);
@@ -304,9 +310,9 @@ namespace MinMatrixCover
                         resultFile.Flush();
                         resultFile.WriteLine();
                     }
-                    
+
                     // resultFile.WriteLine(GetStatistics(m, 1, density));
-                    
+
                     resultFile.Close();
 
                 }

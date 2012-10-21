@@ -54,6 +54,10 @@ namespace MinMatrixCover
         //список весов строк (в данной задаче для всех строк вес равен единице)
         protected List<int> rowsWeight = new List<int>();
 
+        public Matrix()
+        {
+            
+        }
         public Matrix(int width, int height)
         {
             Init(width, height);
@@ -336,13 +340,18 @@ namespace MinMatrixCover
                 int row = GetSyndromRow(out column);
                 if (Output.HasFlag(OutputType.ShowDetailedSolve))
                 {
-                    Console.WriteLine("Syndrom item: row: {0}, column: {1})",row, column);
+                    Console.WriteLine("Syndrom item: row: {0}, column: {1}",row, column);
                 }
                 KeyValuePair<int, int> syndromElement = new KeyValuePair<int, int>(row, column);
                 result.Add(syndromElement);
                 
             }
-            //Console.WriteLine("C:{0}", GetOFV(result));
+            if (Output.HasFlag(OutputType.ShowDetailedSolve))
+            {
+                Console.WriteLine(Print(result));
+                Console.WriteLine("OFV:{0}", GetOFV(result));
+    
+            }
 
             return result;
         }
@@ -571,7 +580,7 @@ namespace MinMatrixCover
                 if (!resolvent.Contains(1))
                 {
                     //прерываем алгоритм, если получили нулевую резольвенту
-                    Console.WriteLine("Don't contains 1");
+                    Console.WriteLine("Iter:{0}, resolvent doesn't contain 1", i);
                     state = 2;
 
                     break;
@@ -581,6 +590,13 @@ namespace MinMatrixCover
             ResultDynamic.Add(new KeyValuePair<int, float>(i, GetOFV(result)));
             iterationCount = i;
 
+
+            if (Output.HasFlag(OutputType.ShowBetterSolution) || !Output.HasFlag(OutputType.ShowTmpSolution))
+            {
+                Console.WriteLine("Final sol: OFV:{0}: {1} ", GetOFV(result),
+                    String.Concat(
+                        result.Select(x => string.Format("{0}:{1}, ", x.Key, x.Value))));
+            }
             var check = result.Select(j => _data.Select(l => l[j.Key]).ToList()).ToList();
             _width = _widthBase;
             _data.RemoveRange(_width, _data.Count - _width);
@@ -589,6 +605,30 @@ namespace MinMatrixCover
             return result;
         }
 
+        public void ReadFromCsvFile(string path, char delim=';')
+        {
+            string[] lines = File.ReadAllLines(path);
+            List<List<int>> tmp = lines.Select(l => l.Split(delim).Select(x=>int.Parse(x)).ToList()).ToList();
+            
+            int w = tmp[0].Count;
+            int h = tmp.Count;
+
+            Init(w, h);
+            rowsWeight = new List<int>();
+
+            while (rowsWeight.Count < h)
+            {
+                rowsWeight.Add(1);
+            }
+
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    SetItem(i, j, tmp[j][i]);
+                }
+            }
+        }
         /// <summary>
         /// Чтение матрицы (с весами) из файла вида
         /// http://people.brunel.ac.uk/~mastjjb/jeb/orlib/scpinfo.html
