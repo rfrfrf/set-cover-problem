@@ -743,7 +743,7 @@ namespace MinMatrixCover
             List<int> coverRows = new List<int>();
             for (int i = 0; i < minCover; i++)
             {
-                int rnd = random.Next(1, _width);
+                int rnd = random.Next(1, _height );
                 if (!coverRows.Contains(rnd))
                 {
                     coverRows.Add(rnd);

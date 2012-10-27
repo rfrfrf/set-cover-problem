@@ -11,17 +11,85 @@ namespace MinMatrixCover
     {
         static void Main(string[] args)
         {
-            Matrix mFile = new Matrix();
-            mFile.ReadFromCsvFile("MatrixTest.csv");
-            Console.WriteLine(mFile);
-            Matrix m = new Matrix(30, 40);
-            m.GenerateMatrix(0.1f);
-            m.Output =  OutputType.ShowBetterSolution;
-            var result = m.Solve2(10000);
-            Console.WriteLine("Check: {0}", m.Check(result));
+            try
+            {
+                Dictionary<string, string> arguments = new Dictionary<string, string>();
+                foreach (string arg in args)
+                {
+                    var split = arg.Split(':');
+                    arguments.Add(split[0].ToLower(), split[1].ToLower());
+                }
 
-            //PerfTest4();
-            Console.ReadKey();
+
+                Matrix m = new Matrix();
+                switch (arguments["source"])
+                {
+                    case "file":
+                        if (!string.IsNullOrEmpty(arguments["filename"]))
+                        {
+                            m.ReadFromCsvFile(arguments["filename"]);
+                        }
+                        else
+                        {
+                            Help();
+                        }
+                        break;
+                    case "rnd":
+                        var rndType = arguments["rndtype"];
+                        int w = int.Parse(arguments["w"]);
+                        int h = int.Parse(arguments["h"]);
+                        float density = float.Parse(arguments["d"], System.Globalization.NumberFormatInfo.InvariantInfo);
+                        int seed = arguments.ContainsKey("seed") ? int.Parse(arguments["seed"]) : 15;
+
+                        m = new Matrix(w, h);
+                        switch (rndType)
+                        {
+                            case "full":
+                                m.GenerateMatrix(density, seed);
+                                break;
+                            case "min1":
+                                int minCover = int.Parse(arguments["mincover"]);
+                                m.GenerateMatrixForTest(density, minCover, seed);
+                                break;
+                            case "min2":
+                                minCover = int.Parse(arguments["mincover"]);
+                                m.GenerateMatrixForTest2(density, minCover, seed);
+                                break;
+                            default:
+                                Help();
+                                break;
+                        }
+                        break;
+                    default:
+                        Help();
+                        break;
+                }
+                int iterationCount = arguments.ContainsKey("n") ? int.Parse(arguments["n"]) : 1;
+
+                int details = arguments.ContainsKey("details") ? int.Parse(arguments["details"]) : 0;
+                if (details >= 5) m.Output |= OutputType.ShowDetailedSolve;
+                if (details >= 4) m.Output |= OutputType.ShowMatrixIteration;
+                if (details >= 3) m.Output |= OutputType.ShowResolvent;
+                if (details >= 2) m.Output |= OutputType.ShowTmpSolution;
+                if (details >= 1) m.Output |= OutputType.ShowBetterSolution;
+
+                Stopwatch timer = new Stopwatch();
+                timer.Start();
+                var result2 = m.Solve2(iterationCount);
+                timer.Stop();
+                Console.WriteLine("Time: {0} ms", timer.ElapsedMilliseconds);
+                Console.WriteLine("Check: {0}", m.Check(result2));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: {0}", ex.Message);
+                Help();
+            }
+        }
+
+        static void Help() {
+            Console.WriteLine("Please enter correct parameters");
+            Console.WriteLine("source:[file,rnd] fileName:[name of file] rndType[full,min1,min2] w[int] h[int] d[float] seed[int] minCover[int] n[int] details[0-5]");
         }
 
         static float Solve(Matrix m, float prevN = 0)
