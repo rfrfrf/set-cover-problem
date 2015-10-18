@@ -1,0 +1,1 @@
+Project for investigating and comparing different approaches of solving set cover problem.
